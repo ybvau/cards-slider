@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Map with Cards - Mapbox GL JS</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Avenir:wght@400;700&display=swap');
+
+    #container {
+      display: flex;
+      background-color: #ffffff; /* Light grey background */
+
+    }
+    #cardsContainer {
+      max-height: 600px;
+      overflow-y: auto;
+      width: 300px;
+      padding: 10px;
+      font-family: 'Avenir', sans-serif;
+    }
+    #map {
+      flex-grow: 1;
+      height: 600px;
+    }
+    .card {
+      cursor: pointer;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin: 5px;
+    }
+    .property-name {
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .address {
+      font-style: italic;
+      font-size: 10px;
+    }
+    .details {
+      font-size: 10px;
+    }
+    .card-selected {
+      background-color: #f0f0f0; /* Light grey background */
+    }
+
+    /* Add styles for the workload visualization */
+    #workloadContainer {
+      padding: 10px;
+    }
+    #workloadBar {
+      width: 0;
+      height: 20px;
+      background-color: #007bff;
+      max-width: 100%; /* Constrain the bar to fit on the screen */
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <!-- Add Select All and Deselect All buttons -->
+    <div>
+      <button id="selectAllBtn">Select All</button>
+      <button id="deselectAllBtn">Deselect All</button>
+    </div>
+    <div id="cardsContainer"></div>
+    <!-- Specify the ID for the map container -->
+    <div id="map"></div>
+  </div>
+
+  <!-- Workload visualization -->
+  <div id="workloadContainer">
+    <div>Total Sqft Selected: <span id="totalSqftDisplay">0</span></div>
+    <div>
+      Sensors: <input type="range" min="1" max="5" value="1" id="sensorSlider">
+    </div>
+    <div id="workloadBar"></div>
+  </div>
+
+  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.3.1/mapbox-gl.js'></script>
+  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.3.1/mapbox-gl.css' rel='stylesheet' />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <script>
+    // Set your Mapbox access token here
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYnJ5YW5qYWNvYnMiLCJhIjoiY2xoNHpxN3l0MDluMzNsczJzbHpieWIxayJ9.EFX6EwOCHvgKW1Gb_ALMRA';
+
+    // Initialize the map
+    var map = new mapboxgl.Map({
+      container: 'map', // Use the specified ID for the map container
+      style: 'mapbox://styles/bryanjacobs/clh4znlb501c601qjdq3jeowe',
+      center: [-74.0060, 40.7128],zoom: 13
+});
+// Create an empty bounds object
+var bounds = new mapboxgl.LngLatBounds();
+
+// Variables to keep track of selected cards and total square footage
+var selectedCards = new Set();
+var totalSqft = 0;
+
+// Parse the CSV file
+Papa.parse('data.csv', {
+  download: true,
+  header: true,
+  complete: function(results) {
+    var data = results.data;
+    var cardsContainer = document.getElementById('cardsContainer');
+    
+    // Generate cards and markers based on CSV data
+    data.forEach(function(row) {
+      // Create card
+      var card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.lat = row.Latitude;
+      card.dataset.lng = row.Longitude;
+      card.dataset.sqft = row['Total Sqft'];
+      card.innerHTML = `
+        <div class="property-name">${row['Property Name']}</div>
+        <div class="address">${row.Address}</div>
+        <div class="details">${row['Total Sqft']} sqft, Built in ${row.Built}</div>
+      `;
+      cardsContainer.appendChild(card);
+
+      // Create marker
+      var marker = new mapboxgl.Marker()
+        .setLngLat([row.Longitude, row.Latitude])
+        .addTo(map);
+
+      // Extend the bounds to include the current point
+      bounds.extend([row.Longitude, row.Latitude]);
+
+      // Add click event listener to the card
+      card.addEventListener('click', function() {
+        // Toggle the 'card-selected' class on the clicked card
+        card.classList.toggle('card-selected');
+
+        // Update the set of selected cards and total square footage
+        var sqft = parseInt(card.dataset.sqft);
+        if (selectedCards.has(card)) {
+          selectedCards.delete(card);
+          totalSqft -= sqft;
+        } else {
+          selectedCards.add(card);
+          totalSqft += sqft;
+        }
+
+        // Update the total square footage display
+        document.getElementById('totalSqftDisplay').textContent = totalSqft;
+
+        // Update the workload bar
+        updateWorkloadBar();
+      });
+    });
+
+    // Fit the map to the bounds of all markers
+    map.fitBounds(bounds, { padding: 90, maxZoom: 14 }); // Adjust maxZoom as needed
+  },
+});
+
+// Select All and Deselect All buttons
+document.getElementById('selectAllBtn').addEventListener('click', function() {
+  selectAllCards(true);
+});
+document.getElementById('deselectAllBtn').addEventListener('click', function() {
+  selectAllCards(false);
+});
+
+// Sensor slider
+document.getElementById('sensorSlider').addEventListener('input', function() {
+  updateWorkloadBar();
+});
+
+// Function to select or deselect all cards
+function selectAllCards(select) {
+  var cards = document.querySelectorAll('.card');
+  totalSqft = 0;
+  selectedCards.clear();
+  cards.forEach(function(card) {
+    if (select) {
+      card.classList.add('card-selected');
+      selectedCards.add(card);
+      totalSqft += parseInt(card.dataset.sqft);
+    } else {
+      card.classList.remove('card-selected');
+    }
+  });
+  document.getElementById('totalSqftDisplay').textContent = totalSqft;
+  updateWorkloadBar();
+}
+
+// Function to update the workload bar
+function updateWorkloadBar() {
+  var sensorCount = parseInt(document.getElementById('sensorSlider').value);
+  var sensorCapacity = 125000 * sensorCount; // One sensor can scan 125000 sqft in one day
+  var daysRequired = Math.ceil(totalSqft / sensorCapacity);
+  var barWidth = Math.min(100, (daysRequired * 20)); // Calculate bar width as a percentage (max 100%)
+document.getElementById('workloadBar').style.width = barWidth + '%';
+}
+</script>
+
+</body>
+</html>
