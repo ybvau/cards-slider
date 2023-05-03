@@ -1,4 +1,3 @@
-<!-----330pm 5/2 update-->
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,6 +9,7 @@
     @import url('https://fonts.googleapis.com/css2?family=Avenir:wght@400;700&display=swap');
 
     body {
+      font-family: 'Avenir', sans-serif;
       background-color: white; /* Set the background color to white */
     }
 
@@ -21,11 +21,11 @@
       overflow-y: auto;
       width: 300px;
       padding: 10px;
-      font-family: 'Avenir', sans-serif;
     }
     #map {
       flex-grow: 1;
       height: 600px;
+      position: relative; /* Ensure the info pane is positioned relative to the map */
     }
     .card {
       cursor: pointer;
@@ -33,9 +33,36 @@
       border: 1px solid #ccc;
       margin: 5px;
     }
-    .property-name {
+    .card-selected {
+      background-color: #f0f0f0; /* Light grey background */
+    }
+    #infoPane {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 33%; /* One-third the width of the map */
+      max-height: 100%;
+      overflow-y: auto;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      box-sizing: border-box;
+      display: none; /* Initially hidden */
+      z-index: 1; /* Ensure it's above the map */
+    }
+    .popup-image {
+      width: 100%;
+      height: auto;
+    }
+    .popup-title {
+      font-size: 18px;
       font-weight: bold;
-      font-size: 14px;
+    }
+    .popup-address {
+      font-style: italic;
+    }
+    .property-name {
+  font-weight: bold;
+  font-size: 14px;
     }
     .address {
       font-style: italic;
@@ -44,16 +71,16 @@
     .details {
       font-size: 10px;
     }
-    /* Add this CSS class to style the selected card */
-    .card-selected {
-      background-color: #f0f0f0; /* Light grey background */
-    }
+
   </style>
 </head>
 <body>
   <div id="container">
     <div id="cardsContainer"></div>
-    <div id="map"></div>
+    <div id="map">
+      <!-- Add the info pane inside the map container -->
+      <div id="infoPane"></div>
+    </div>
   </div>
 
   <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.3.1/mapbox-gl.js'></script>
@@ -66,33 +93,35 @@
     // Initialize the map
     var map = new mapboxgl.Map({
       container: 'map',
-      style: 'mapbox://styles/bryanjacobs/clh4znlb501c601qjdq3jeowe',
-      center: [-74.0060, 40.7128],
-      zoom: 13
-    });
+style: 'mapbox://styles/bryanjacobs/clh4znlb501c601qjdq3jeowe',
+center: [-74.0060, 40.7128],
+zoom: 13
+});
+// Create an empty bounds object
+var bounds = new mapboxgl.LngLatBounds();
 
-    // Create an empty bounds object
-    var bounds = new mapboxgl.LngLatBounds();
+// Parse the CSV file
+Papa.parse('data.csv', {
+  download: true,
+  header: true,
+  complete: function(results) {
+    var data = results.data;
+    var cardsContainer = document.getElementById('cardsContainer');
 
-    // Parse the CSV file
-    Papa.parse('data.csv', {
-      download: true,
-      header: true,
-      complete: function(results) {
-        var data = results.data;
-        var cardsContainer = document.getElementById('cardsContainer');
-        
-        // Generate cards and markers based on CSV data
-        data.forEach(function(row)
-        {
-        // Create card
-        var card = document.createElement('div');
-        card.className = 'card';
-        card.dataset.lat = row.Latitude;
-        card.dataset.lng = row.Longitude;
-        card.innerHTML = `<div class="property-name">${row['Property Name']}</div> <div class="address">${row.Address}</div> <div class="details">${row['Total Sqft']} sqft, Built in ${row.Built}</div> `;
-        cardsContainer.appendChild(card);
-              // Create marker
+    // Create a variable to store the current popup
+    var currentPopup = null;
+
+    // Generate cards and markers based on CSV data
+    data.forEach(function(row) {
+      // Create card
+      var card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.lat = row.Latitude;
+      card.dataset.lng = row.Longitude;
+      card.innerHTML = `<div class="property-name">${row['Property Name']}</div> <div class="address">${row.Address}</div> <div class="details">${row['Total Sqft']} sqft, Built in ${row.Built}</div> `;
+      cardsContainer.appendChild(card);
+
+      // Create marker
       var marker = new mapboxgl.Marker()
         .setLngLat([row.Longitude, row.Latitude])
         .addTo(map);
@@ -102,12 +131,42 @@
 
       // Add click event listener to the card
       card.addEventListener('click', function() {
+
+          // If the card is already selected, deselect it and hide the info pane
+        if (card.classList.contains('card-selected')) {
+          card.classList.remove('card-selected');
+          infoPane.style.display = 'none';
+          return;
+        }
         // Remove the 'card-selected' class from all cards
         document.querySelectorAll('.card').forEach(function(c) {
           c.classList.remove('card-selected');
         });
+
         // Add the 'card-selected' class to the clicked card
         card.classList.add('card-selected');
+
+        // Close any existing popup
+        if (currentPopup) {
+          currentPopup.remove();
+        }
+
+        // Get the info pane element
+        var infoPane = document.getElementById('infoPane');
+
+        // Update the content of the info pane
+        infoPane.innerHTML = `
+          <div class="popup-content">
+            <img class="popup-image" src="https://via.placeholder.com/200" alt="Placeholder Image">
+            <h2 class="popup-title">${row['Property Name']}</h2>
+            <div class="popup-address">${row.Address}</div>
+            <div>${row['Total Sqft']} sqft</div>
+            <div>Built in ${row.Built}</div>
+          </div>
+        `;
+
+        // Show the info pane
+        infoPane.style.display = 'block';
 
         var lat = parseFloat(card.dataset.lat);
         var lng = parseFloat(card.dataset.lng);
@@ -117,13 +176,30 @@
           zoom: 15,
           essential: true
         });
-      });
-    });
+      }); // End of click event listener
+    }); // End of forEach
 
     // Fit the map to the bounds of all markers
     map.fitBounds(bounds, { padding: 90, maxZoom: 14 }); // Adjust maxZoom as needed
-  },
+
+    // Add click event listener to the map to deselect the card and hide the info pane
+    map.on('click', function(e) {
+      // Check if the click event target is the info pane or a child of the info pane
+      if (e.originalEvent.target.closest('#infoPane')) {
+        return; // Do nothing if the info pane was clicked
+      }
+
+      // Remove the 'card-selected' class from all cards
+      document.querySelectorAll('.card').forEach(function(c) {c.classList.remove('card-selected');
 });
+      // Get the info pane element
+      var infoPane = document.getElementById('infoPane');
+
+      // Hide the info pane
+      infoPane.style.display = 'none';
+    });
+  }, // End of complete function
+}); // End of Papa.parse
 </script>
 </body>
 </html>
