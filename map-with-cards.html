@@ -40,8 +40,8 @@
       position: absolute;
       top: 10px;
       left: 10px;
-      bottom: 10px;
       width: 33%; /* One-third the width of the map */
+      height: 60%;
       overflow-y: auto;
       background-color: rgba(255, 255, 255, 0.9);
       padding: 10px;
@@ -52,6 +52,8 @@
     .popup-image {
       width: 100%;
       height: auto;
+      max-height: 200px; /* Limit the height of the image */
+      object-fit: cover; /* Ensure the aspect ratio of the image is preserved */
     }
     .popup-title {
       font-size: 18px;
@@ -61,8 +63,8 @@
       font-style: italic;
     }
     .property-name {
-  font-weight: bold;
-  font-size: 14px;
+      font-weight: bold;
+      font-size: 14px;
     }
     .address {
       font-style: italic;
@@ -71,7 +73,6 @@
     .details {
       font-size: 10px;
     }
-
   </style>
 </head>
 <body>
@@ -88,8 +89,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
   <script>
-// Set your Mapbox access token here
-mapboxgl.accessToken = 'pk.eyJ1IjoiYnJ5YW5qYWNvYnMiLCJhIjoiY2xoNHpxN3l0MDluMzNsczJzbHpieWIxayJ9.EFX6EwOCHvgKW1Gb_ALMRA';
+    // Set your Mapbox access token here
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYnJ5YW5qYWNvYnMiLCJhIjoiY2xoNHpxN3l0MDluMzNsczJzbHpieWIxayJ9.EFX6EwOCHvgKW1Gb_ALMRA';
 
 // Initialize the map
 var map = new mapboxgl.Map({
@@ -181,78 +182,79 @@ Papa.parse('data.csv', {
 
         // Scroll to the selected card
         card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-      }); // End of card click event listener
-
-      // Add click event listener to the marker
-      marker.getElement().addEventListener('click', function(e) {
-        // Stop the event propagation so that the 'click' event on the map won't be triggered
-         e.stopPropagation();
-        // Remove the 'card-selected' class from all cards
-        document.querySelectorAll('.card').forEach(function(c) {
-          c.classList.remove('card-selected');
-        });
-
-        // Add the 'card-selected' class to the clicked card
-        card.classList.add('card-selected');
-
-        // Close any existing popup
-        if (currentPopup) {
-          currentPopup.remove();
-        }
-
-        // Get the info pane element
-        var infoPane = document.getElementById('infoPane');
-
-        // Update the content of the info pane
-        infoPane.innerHTML = `
-          <div class="popup-content">
-            <img class="popup-image" src="https://via.placeholder.com/200" alt="Placeholder Image">
-            <h2 class="popup-title">${row['Property Name']}</h2>
-            <div class="popup-address">${row.Address}</div>
-            <div>${row['Total Sqft']} sqft</div>
-            <div>Built in ${row.Built}</div>
-          </div>
-        `;
-
-        // Show the info pane
-        infoPane.style.display = 'block';
-
-        // Fly to the selected location
-        map.flyTo({
-          center: [row.Longitude, row.Latitude],
-          zoom: 15,
-          essential: true
-        });
-
-        // Scroll to the selected card
-        card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-      }); // End of marker click event listener
-    }); // End of forEach
-
-    // Fit the map to the bounds of all markers
-    map.fitBounds(bounds, { padding: 90, maxZoom: 14 }); // Adjust maxZoom as needed
-
-    // Add click event listener to the map to deselect the card and hide the info pane
-    map.on('click', function(e) {
-      // Check if the click event target is the info pane or a child of the info pane
-      if (e.originalEvent.target.closest('#infoPane')) {
-        return; // Do nothing if the info pane was clicked
-      }
-
-      // Remove the 'card-selected' class from all cards
-      document.querySelectorAll('.card').forEach(function(c) {
-        c.classList.remove('card-selected');
-      });
-
-      // Get the info pane element
-      var infoPane = document.getElementById('infoPane');
-
-      // Hide the info pane
-      infoPane.style.display = 'none';
+      }); // End of card click event listener 
+        // Add click event listener to the marker
+  marker.getElement().addEventListener('click', function(e) {
+    // Stop the event propagation so that the 'click' event on the map won't be triggered
+    e.stopPropagation();
+    // Remove the 'card-selected' class from all cards
+    document.querySelectorAll('.card').forEach(function(c) {
+      c.classList.remove('card-selected');
     });
-  }, // End of complete function
+
+    // Add the 'card-selected' class to the clicked card
+    card.classList.add('card-selected');
+
+    // Close any existing popup
+    if (currentPopup) {
+      currentPopup.remove();
+    }
+
+    // Get the info pane element
+    var infoPane = document.getElementById('infoPane');
+
+    // Update the content of the info pane
+    infoPane.innerHTML = `
+      <div class="popup-content">
+        <img class="popup-image" src="https://via.placeholder.com/200" alt="Placeholder Image">
+        <h2 class="popup-title">${row['Property Name']}</h2>
+        <div class="popup-address">${row.Address}</div>
+        <div>${row['Total Sqft']} sqft</div>
+        <div>Built in ${row.Built}</div>
+      </div>
+    `;
+
+    // Show the info pane
+    infoPane.style.display = 'block';
+
+    // Fly to the selected location
+    map.flyTo({
+      center: [row.Longitude, row.Latitude],
+      zoom: 15,
+      essential: true
+    });
+
+    // Scroll to the selected card
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+  }); // End of marker click event listener
+}); // End of forEach
+
+// Fit the map to the bounds of all markers
+map.fitBounds(bounds, { padding: 90, maxZoom: 14 }); // Adjust maxZoom as needed
+
+// Add click event listener to the map to deselect the card and hide the info pane
+map.on('click', function(e) {
+  // Check if the click event target is the info pane or a child of the info pane
+  if (e.originalEvent.target.closest('#infoPane')) {
+    return; // Do nothing if the info pane was clicked
+  }
+
+  // Remove the 'card-selected' class from all cards
+  document.querySelectorAll('.card').forEach(function(c) {
+    c.classList.remove('card-selected');
+  });
+
+  // Get the info pane element
+  var infoPane = document.getElementById('infoPane');
+
+  // Hide the info pane
+  infoPane.style.display = 'none';
+});
+}, // End of complete function
 }); // End of Papa.parse
 
 </script>
 </body>
 </html>
+
+
