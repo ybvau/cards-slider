@@ -5,27 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Slide Pages</title>
     <style>
-         body {
-            margin: 0;
-            padding: 0;
-            font-family: Avenir, Arial, sans-serif;
-        }
-
-        .iframe-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh; /* Use the full viewport height */
-        }
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: Avenir, Arial, sans-serif;
+        box-sizing: border-box;
+    }
 
         .container {
             position: relative;
             overflow: hidden;
+            width: 100%;
         }
+
         .slide-container {
             display: flex;
             transition: transform 0.5s ease-in-out;
+            width: 100%;
         }
+
         .slide-page {
             flex: 0 0 100%;
             padding: 0;
@@ -35,11 +33,14 @@
             flex-direction: column;
             align-items: center;
             overflow: hidden;
+            box-sizing: border-box;
         }
+
         .slide-page:nth-child(even) {
             color: black;
             background-color: white;
         }
+
         .header {
             width: 100%;
             padding: 20vh 0 10vh 20vh;
@@ -49,29 +50,36 @@
             box-sizing: border-box;
             font-size: 48px;
         }
+
         .slide-page:nth-child(even) .header {
             background-color: black;
             color: white;
         }
-        .content-container {
-            flex-grow: 1; /* Take up all available space */
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: stretch; /* Stretch to fill available space */
-        }
+
         .content {
             padding: 0 10vh;
             width: 100%; /* Take up full width */
-            height: 100%;
+            box-sizing: border-box;
+            align-self: center; /* Center the content */
         }
+
+        .iframe-wrapper {
+            width: 90%;
+            height: 650px;
+            overflow: auto;
+        }
+
+        .iframe-wrapper.active {
+            pointer-events: auto;
+        }
+
         .nav-buttons {
             position: fixed;
             top: 50%;
             left: 0;
             transform: translateY(-50%);
         }
+
         .nav-button {
             display: block;
             width: 20px;
@@ -83,62 +91,55 @@
             border-radius: 50%;
             cursor: pointer;
         }
+
         .nav-button.selected {
             background-color: gray;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="slide-container" id="slideContainer">
-            <div class="slide-page">
-                <div class="header">Hello, [client] </div>
-                <div class="content-container">
-                    <div class="content"><p>Content for page 1...</p></div>
+    <main class="container">
+        <section class="slide-container" id="slideContainer">
+            <article class="slide-page">
+                <header class="header">Hello, [client]</header>
+                <p class="content">Content for page 1...</p>
+            </article>
+            <article class="slide-page">
+                <header class="header">Header 2</header>
+                <p class="content">Content for page 2...</p>
+            </article>
+            <article class="slide-page">
+                <header class="header">What'll it take to work on some of your properties?</header>
+                <div class="iframe-wrapper">
+                    <iframe src="./map-with-cards.html" width="100%" height="650px" frameborder="1"></iframe>
                 </div>
-            </div>
-            <div class="slide-page">
-                <div class="header">Header 2</div>
-                <div class="content-container">
-                    <div class="content"><p>Content for page 2...</p></div>
-                </div>
-            </div>
-            <div class="slide-page">
-                <div class="header">What'll it take to work on some of your properties?</div>
-                <div class="content-container">
-                    <div class="content">
-                        <!-- Add the iframe element for the map component -->
-                            <iframe src="./map-with-cards.html" width="1200" height="650" frameborder="1"></iframe>
-                    </div>
-                </div>
-            </div>
-            <div class="slide-page">
-                <div class="header">Header 4</div>
-                <div class="content-container">
-                    <div class="content"><p>Content for page 4...</p></div>
-                </div>
-                </div>
-                </div>
-                </div>
-                <div class="nav-buttons">
-                <button class="nav-button selected" onclick="navigateToSlide(0)"></button>
-                <button class="nav-button" onclick="navigateToSlide(1)"></button>
-                <button class="nav-button" onclick="navigateToSlide(2)"></button>
-                <button class="nav-button" onclick="navigateToSlide(3)"></button>
-                </div>
-                <script>
-                const slideContainer = document.getElementById('slideContainer');
-                const navButtons = document.querySelectorAll('.nav-button');
-                function navigateToSlide(index) {
-        const transformValue = -index * 100;
-        slideContainer.style.transform = `translateX(${transformValue}%)`;
+            </article>
+            <article class="slide-page">
+                <header class="header">Header 4</header>
+                <p class="content">Content for page 4...</p>
+            </article>
+        </section>
+        <nav class="nav-buttons">
+            <button class="nav-button selected" onclick="navigateToSlide(0)"></button>
+            <button class="nav-button" onclick="navigateToSlide(1)"></button>
+            <button class="nav-button" onclick="navigateToSlide(2)"></button>
+            <button class="nav-button" onclick="navigateToSlide(3)"></button>
+        </nav>
+    </main>
+    <script>
+            const slideContainer = document.getElementById('slideContainer');
+        const navButtons = document.querySelectorAll('.nav-button');
 
-        // Remove the "selected" class from all buttons
-        navButtons.forEach(button => button.classList.remove('selected'));
+        function navigateToSlide(index) {
+            const transformValue = -index * 100;
+            slideContainer.style.transform = `translateX(${transformValue}%)`;
 
-        // Add the "selected" class to the clicked button
-        navButtons[index].classList.add('selected');
-    }
-</script>
+            // Remove the "selected" class from all buttons
+            navButtons.forEach(button => button.classList.remove('selected'));
+
+            // Add the "selected" class to the clicked button
+            navButtons[index].classList.add('selected');
+        }
+    </script>
 </body>
 </html>
