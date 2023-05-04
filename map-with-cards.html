@@ -86,17 +86,19 @@
   <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.3.1/mapbox-gl.js'></script>
   <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.3.1/mapbox-gl.css' rel='stylesheet' />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-  <script>
-    // Set your Mapbox access token here
-    mapboxgl.accessToken = 'pk.eyJ1IjoiYnJ5YW5qYWNvYnMiLCJhIjoiY2xoNHpxN3l0MDluMzNsczJzbHpieWIxayJ9.EFX6EwOCHvgKW1Gb_ALMRA';
 
-    // Initialize the map
-    var map = new mapboxgl.Map({
-      container: 'map',
-style: 'mapbox://styles/bryanjacobs/clh4znlb501c601qjdq3jeowe',
-center: [-74.0060, 40.7128],
-zoom: 13
+  <script>
+// Set your Mapbox access token here
+mapboxgl.accessToken = 'pk.eyJ1IjoiYnJ5YW5qYWNvYnMiLCJhIjoiY2xoNHpxN3l0MDluMzNsczJzbHpieWIxayJ9.EFX6EwOCHvgKW1Gb_ALMRA';
+
+// Initialize the map
+var map = new mapboxgl.Map({
+  container: 'map',
+  style: 'mapbox://styles/bryanjacobs/clh4znlb501c601qjdq3jeowe',
+  center: [-74.0060, 40.7128],
+  zoom: 13
 });
+
 // Create an empty bounds object
 var bounds = new mapboxgl.LngLatBounds();
 
@@ -131,13 +133,60 @@ Papa.parse('data.csv', {
 
       // Add click event listener to the card
       card.addEventListener('click', function() {
+        // Get the info pane element
+        var infoPane = document.getElementById('infoPane');
 
-          // If the card is already selected, deselect it and hide the info pane
+        // If the card is already selected, deselect it and hide the info pane
         if (card.classList.contains('card-selected')) {
           card.classList.remove('card-selected');
           infoPane.style.display = 'none';
           return;
         }
+
+        // Remove the 'card-selected' class from all cards
+        document.querySelectorAll('.card').forEach(function(c) {
+          c.classList.remove('card-selected');
+        });
+
+        // Add the 'card-selected' class to the clicked card
+        card.classList.add('card-selected');
+
+        // Close any existing popup
+        if (currentPopup) {
+          currentPopup.remove();
+        }
+
+        // Update the content of the info pane
+        infoPane.innerHTML = `
+          <div class="popup-content">
+            <img class="popup-image" src="https://via.placeholder.com/200" alt="Placeholder Image">
+            <h2 class="popup-title">${row['Property Name']}</h2>
+            <div class="popup-address">${row.Address}</div>
+            <div>${row['Total Sqft']} sqft</div>
+            <div>Built in ${row.Built}</div>
+          </div>
+        `;
+
+        // Show the info pane
+        infoPane.style.display = 'block';
+
+        var lat = parseFloat(card.dataset.lat);
+        var lng = parseFloat(card.dataset.lng);
+        // Fly to the selected location
+        map.flyTo({
+          center: [lng, lat],
+          zoom: 15,
+          essential: true
+        });
+
+        // Scroll to the selected card
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+      }); // End of card click event listener
+
+      // Add click event listener to the marker
+      marker.getElement().addEventListener('click', function(e) {
+        // Stop the event propagation so that the 'click' event on the map won't be triggered
+         e.stopPropagation();
         // Remove the 'card-selected' class from all cards
         document.querySelectorAll('.card').forEach(function(c) {
           c.classList.remove('card-selected');
@@ -168,15 +217,16 @@ Papa.parse('data.csv', {
         // Show the info pane
         infoPane.style.display = 'block';
 
-        var lat = parseFloat(card.dataset.lat);
-        var lng = parseFloat(card.dataset.lng);
         // Fly to the selected location
         map.flyTo({
-          center: [lng, lat],
+          center: [row.Longitude, row.Latitude],
           zoom: 15,
           essential: true
         });
-      }); // End of click event listener
+
+        // Scroll to the selected card
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+      }); // End of marker click event listener
     }); // End of forEach
 
     // Fit the map to the bounds of all markers
@@ -190,8 +240,10 @@ Papa.parse('data.csv', {
       }
 
       // Remove the 'card-selected' class from all cards
-      document.querySelectorAll('.card').forEach(function(c) {c.classList.remove('card-selected');
-});
+      document.querySelectorAll('.card').forEach(function(c) {
+        c.classList.remove('card-selected');
+      });
+
       // Get the info pane element
       var infoPane = document.getElementById('infoPane');
 
@@ -200,6 +252,7 @@ Papa.parse('data.csv', {
     });
   }, // End of complete function
 }); // End of Papa.parse
+
 </script>
 </body>
 </html>
