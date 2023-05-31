@@ -12,111 +12,140 @@
         box-sizing: border-box;
     }
 
-        .container {
-            position: relative;
-            overflow: hidden;
-            width: 100%;
-        }
+    .container {
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+    }
 
-        .slide-container {
-            display: flex;
-            transition: transform 0.5s ease-in-out;
-            width: 100%;
-        }
+    .slide-container {
+        display: flex;
+        transition: transform 0.5s ease-in-out;
+        width: 100%;
+    }
 
-        .slide-page {
-            flex: 0 0 100%;
-            padding: 0;
-            color: white;
-            background-color: black;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow: hidden;
-            box-sizing: border-box;
-        }
+    .slide-page {
+        flex: 0 0 100%;
+        padding: 0;
+        color: white;
+        background-color: black;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        overflow: hidden;
+        box-sizing: border-box;
+    }
 
-        .slide-page:nth-child(even) {
-            color: black;
-            background-color: white;
-        }
+    .slide-page:nth-child(even) {
+        color: black;
+        background-color: white;
+    }
 
-        .header {
-            width: 100%;
-            padding: 20vh 0 10vh 20vh;
-            text-align: left;
-            background-color: white;
-            color: black;
-            box-sizing: border-box;
-            font-size: 48px;
-        }
+    .header {
+        width: 100%;
+        padding: 20vh 0 10vh 20vh;
+        text-align: left;
+        background-color: white;
+        color: black;
+        box-sizing: border-box;
+        font-size: 48px;
+    }
 
-        .slide-page:nth-child(even) .header {
-            background-color: black;
-            color: white;
-        }
+    .slide-page:nth-child(even) .header {
+        background-color: black;
+        color: white;
+    }
 
-        .content {
-            padding: 0 10vh;
-            width: 100%; /* Take up full width */
-            box-sizing: border-box;
-            align-self: center; /* Center the content */
-        }
+    .content {
+        padding: 0 10vh;
+        width: 100%; /* Take up full width */
+        box-sizing: border-box;
+        align-self: center; /* Center the content */
+    }
 
-        .iframe-wrapper {
-            width: 90%;
-            height: 650px;
-            overflow: auto;
-        }
+    .iframe-wrapper {
+        width: 90%;
+        height: 650px;
+        overflow: auto;
+    }
 
-        .iframe-wrapper.active {
-            pointer-events: auto;
-        }
+    .iframe-wrapper.active {
+        pointer-events: auto;
+    }
 
-        .nav-buttons {
-            position: fixed;
-            top: 50%;
-            left: 0;
-            transform: translateY(-50%);
-        }
+    .nav-buttons {
+        position: fixed;
+        top: 50%;
+        left: 0;
+        transform: translateY(-50%);
+    }
 
-        .nav-button {
-            display: block;
-            width: 20px;
-            height: 20px;
-            padding: 0;
-            margin: 5px;
-            background-color: white;
-            border: 2px solid black;
-            border-radius: 50%;
-            cursor: pointer;
-        }
+    .nav-button {
+        display: block;
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        margin: 5px;
+        background-color: white;
+        border: 2px solid black;
+        border-radius: 50%;
+        cursor: pointer;
+    }
 
-        .nav-button.selected {
-            background-color: gray;
-        }
+    .nav-button.selected {
+        background-color: gray;
+    }
     </style>
 </head>
 <body>
     <main class="container">
         <section class="slide-container" id="slideContainer">
             <article class="slide-page">
-                <header class="header">Hello, [client]</header>
-                <p class="content">Content for page 1...</p>
+                <header class="header">Hi, [client]!</header>
+                <div class="content">
+                <p>There's a surge of interest in digitizing properties for a more seamless, omniscient overview of portfolios f scale.</p>
+                <p>You've got some properties. It'd be pretty convenient for them to be digitized.</p></p>
             </article>
             <article class="slide-page">
-                <header class="header">Header 2</header>
-                <p class="content">Content for page 2...</p>
+                <header class="header"><strong>Digital Twins:</strong> the <strong>future</strong> of portfolio maintenance.</header>
+                <div class="content">
+                    <p><strong>Accurate and accessible plans and critical building data.</strong></p>
+                    <p>How many times have you searched for that elusive accurate floor plan for Level 13 of ANY building? Now, accurate data is just a click away. Plus, you can easily share that data with anyone, giving you a powerful and productive advantage.</p>
+                    <p><strong>Architectural, Engineering and Construction.</strong></p>
+                    <p>No more searching for accurate data. No more tasking Architects and Engineers to procure accurate building data for your projects. With our solution, you have all the data at your fingertips. Connect your AEC teams, and work can start the same day.</p>
+                    <h3>More areas impacted by Digital Twins:</h3>
+                    <ul>
+                        <li><strong>Facilities Management:</strong> BIM models provide building owners with a comprehensive view of their building's systems and operations, allowing them to make informed decisions and improve the overall management of their facilities.</li>
+                        <li><strong>Facilities Maintenance:</strong> BIM models can provide owners with valuable data that helps them better manage their facilities and reduce costs. By leveraging BIM models for maintenance purposes, owners can improve building performance and extend asset lifespan.</li>
+                        <li><strong>Asset Management:</strong> BIM models serve as a powerful tool for owners to optimize the management of their assets. By leveraging the data and insights provided by BIM models, owners can optimize operations, reduce costs, and improve asset performance.</li>
+                        <li><strong>Leasing:</strong> BIM models can be a powerful tool for owners looking to lease space. By utilizing the accuracy and detail provided by BIM models, owners can create a more compelling and efficient leasing process and attract high-quality tenants to their properties.</li>
+                        <li><strong>Regulatory Compliance:</strong> BIM models help owners comply with regulatory requirements, such as LL97. By utilizing BIM technology, owners can optimize building performance, reduce energy consumption, and meet regulatory standards.</li>
+                        <li><strong>Insurance:</strong> BIM models assist owners in demonstrating compliance with insurance requirements, reducing the risk of losses, and ultimately lowering insurance premiums.</li>
+                        <li><strong>Security/Safety:</strong> BIM models provide detailed information that helps owners improve safety and security in their buildings. By leveraging the information provided by BIM models, owners can proactively identify potential safety and security risks and take appropriate measures.</li>
+                    </ul>
+                </div>
+            </article>
+            <article class="slide-page">
+                <header class="header">Who is <strong>BIMstream?</strong></header>
+                <div class="content">
+                    <p>We're BIMstream.</p>
+                    <p>BIMstream is an interdisciplinary family of architects, engineers, construction professionals, and creative technologists who have a passion for future-proofing businesses by preparing their assets for the digital age.</p>
+                    <p>With a pulse on the state-of-the-art information modeling technology, our team prides ourselves in the ability to scan and model properties of all shapes and sizes to bring your portfolio to the technology 4.0 era.</p>
+                    <p>We want to supply you with real-time information on the status of your building so all developments can be planned, mapped, and orchestrated from your building's digital twin.</p>
+                    <h2>We scan buildings and digitize portfolios.</h2>
+                    <ol>
+                        <li><strong>We do our Research.</strong> First, we learn about your space: how many floors, how it's structured, we review model layout documents, we assemble an idea for how much work will need to go into this to make things work well.</li>
+                        <li><strong>We scan your Reality.</strong> Then, once the plan has been cleared and the expectations are properly set, we scan. Using state-of-the-art sensor equipment, we capture your reality and generate point clouds and create the digital twins.</li>
+                        <li><strong>We model the Digital Twins.</strong> Our modeling team (exclusively Architects and Engineers) process the data we gather and model a twin of the scanned information. We have an extensive QA/QC workflow that ensures near perfection.</li>
+                        <li><strong>We host your Digital Twins.</strong> Finally: Your buildings, online and in the cloud. Forget the nuanced self-management and organization of this information. It's confusing - we get it. That's why we've built your one-stop shop for all your building data. Share with your Enterprise. Share with your AEC teams. You’re in control.</li>
+                    </ol>
+                </div>
             </article>
             <article class="slide-page">
                 <header class="header">What'll it take to work on some of your properties?</header>
                 <div class="iframe-wrapper">
                     <iframe src="./map-with-cards.html" width="100%" height="650px" frameborder="1"></iframe>
                 </div>
-            </article>
-            <article class="slide-page">
-                <header class="header">Header 4</header>
-                <p class="content">Content for page 4...</p>
             </article>
         </section>
         <nav class="nav-buttons">
@@ -127,7 +156,7 @@
         </nav>
     </main>
     <script>
-            const slideContainer = document.getElementById('slideContainer');
+        const slideContainer = document.getElementById('slideContainer');
         const navButtons = document.querySelectorAll('.nav-button');
 
         function navigateToSlide(index) {
