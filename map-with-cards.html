@@ -4,7 +4,7 @@
   <title>Map with Cards - Mapbox GL JS</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" rel="stylesheet">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v1.3.1/mapbox-gl.css" rel="stylesheet">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Avenir:wght@400;700&display=swap');
 
@@ -35,6 +35,9 @@
     }
     .card-selected {
       background-color: #f0f0f0; /* Light grey background */
+    }
+    .marker-selected {
+      background-color: orange; /* Orange marker color */
     }
     #infoPane {
       position: absolute;
@@ -73,11 +76,16 @@
     .details {
       font-size: 10px;
     }
+    .select-all-btn {
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
   <div id="container">
-    <div id="cardsContainer"></div>
+    <div id="cardsContainer">
+      <button id="selectAllBtn" class="select-all-btn">Select All</button>
+    </div>
     <div id="map">
       <!-- Add the info pane inside the map container -->
       <div id="infoPane"></div>
@@ -90,240 +98,170 @@
 
   <script>
     // Set your Mapbox access token here
-mapboxgl.accessToken = 'pk.eyJ1IjoiYnJ5YW5qYWNvYnMiLCJhIjoiY2xoNHpxN3l0MDluMzNsczJzbHpieWIxayJ9.EFX6EwOCHvgKW1Gb_ALMRA';
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYnJ5YW5qYWNvYnMiLCJhIjoiY2xoNHpxN3l0MDluMzNsczJzbHpieWIxayJ9.EFX6EwOCHvgKW1Gb_ALMRA';
 
-// Initialize the map
-var map = new mapboxgl.Map({
-  container: 'map',
-  style: 'mapbox://styles/bryanjacobs/clh4znlb501c601qjdq3jeowe',
-  center: [-74.0060, 40.7128],
-  zoom: 13
-});
-
-// Create an empty bounds object
-var bounds = new mapboxgl.LngLatBounds();
-
-// Parse the CSV file
-Papa.parse('data.csv', {
-  download: true,
-  header: true,
-  complete: function(results) {
-    var data = results.data;
-    var cardsContainer = document.getElementById('cardsContainer');
-
-    // Create a variable to store the current popup
-    var currentPopup = null;
-
-    // Generate cards and markers based on CSV data
-    data.forEach(function(row) {
-      // Create card
-      var card = document.createElement('div');
-      card.className = 'card';
-      card.dataset.lat = row.Latitude;
-      card.dataset.lng = row.Longitude;
-      card.innerHTML = `<div class="property-name">${row['Property Name']}</div> <div class="address">${row.Address}</div> <div class="details">${row['Total Sqft']} sqft, Built in ${row.Built}</div> `;
-      cardsContainer.appendChild(card);
-
-      // Create marker
-      var marker = new mapboxgl.Marker()
-        .setLngLat([row.Longitude, row.Latitude])
-        .addTo(map);
-
-      // Extend the bounds to include the current point
-      bounds.extend([row.Longitude, row.Latitude]);
-
-      // Add click event listener to the card
-      card.addEventListener('click', function() {
-        // Get the info pane element
-        var infoPane = document.getElementById('infoPane');
-
-        // If the card is already selected, deselect it and hide the info pane
-        if (card.classList.contains('card-selected')) {
-          card.classList.remove('card-selected');
-          infoPane.style.display = 'none';
-          return;
-        }
-
-        // Remove the "card-selected" class from all cards
-        document.querySelectorAll('.card').forEach(function(c) {
-          c.classList.remove('card-selected');
-        });
-
-        // Add the "card-selected" class to the clicked card
-        card.classList.add('card-selected');
-
-        // Close any existing popup
-        if (currentPopup) {
-          currentPopup.remove();
-        }
-
-        // Update the content of the info pane
-        infoPane.innerHTML = `
-          <div class="popup-content">
-            <img class="popup-image" src="https://via.placeholder.com/200" alt="Placeholder Image">
-            <h2 class="popup-title">${row['Property Name']}</h2>
-            <div class="popup-address">${row.Address}</div>
-            <div>${row['Total Sqft']} sqft</div>
-            <div>Built in ${row.Built}</div>
-          </div>
-        `;
-
-        // Show the info pane
-        infoPane.style.display = 'block';
-
-        var lat = parseFloat(card.dataset.lat);
-        var lng = parseFloat(card.dataset.lng);
-        // Fly to the selected location
-        map.flyTo({
-          center: [lng, lat],
-          zoom: 15,
-          essential: true
-        });
-      }); // End of card click event listener 
-
-      // Add click event listener to the marker
-      marker.getElement().addEventListener('click', function(e) {
-        // Stop the event propagation so that the 'click' event on the map won't be triggered
-        e.stopPropagation();
-
-        // Remove the 'card-selected' class from all cards
-        document.querySelectorAll('.card').forEach(function(c) {
-          c.classList.remove('card-selected');
-        });
-
-        // Add the 'card-selected' class to the clicked card
-        card.classList.add('card-selected');
-
-        // Close any existing popup
-        if (currentPopup) {
-          currentPopup.remove();
-        }
-
-        // Get the info pane element
-        var infoPane = document.getElementById('infoPane');
-
-        // Update the content of the info pane
-        infoPane.innerHTML = `
-          <div class="popup-content">
-            <img class="popup-image" src="https://via.placeholder.com/200" alt="Placeholder Image">
-            <h2 class="popup-title">${row['Property Name']}</h2>
-            <div class="popup-address">${row.Address}</div>
-            <div>${row['Total Sqft']} sqft</div>
-            <div>Built in ${row.Built}</div>
-          </div>
-        `;
-
-        // Show the info pane
-        infoPane.style.display = 'block';
-
-        // Fly to the selected location
-        map.flyTo({
-          center: [row.Longitude, row.Latitude],
-          zoom: 15,
-          essential: true
-        });
-
-        // Scroll to the selected card
-        smoothScrollTo(cardsContainer, card.offsetTop - cardsContainer.offsetTop, 600);
-      }); // End of marker click event listener
-    }); // End of forEach
-
-    // Fit the map to the bounds of all markers
-    map.fitBounds(bounds, { padding: 90, maxZoom: 14 }); // Adjust maxZoom as needed
-
-    // Add click event listener to the map to deselect the card and hide the info pane
-    map.on('click', function(e) {
-      // Check if the click event target is the info pane or a child of the info pane
-      if (e.originalEvent.target.closest('#infoPane')) {
-        return; // Do nothing if the info pane was clicked
-      }
-
-      // Remove the 'card-selected' class from all cards
-      document.querySelectorAll('.card').forEach(function(c) {
-        c.classList.remove('card-selected');
-      });
-
-      // Get the info pane element
-      var infoPane = document.getElementById('infoPane');
-
-      // Hide the info pane
-      infoPane.style.display = 'none';
+    // Initialize the map
+    var map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/bryanjacobs/clh4znlb501c601qjdq3jeowe',
+      center: [-74.0060, 40.7128],
+      zoom: 13
     });
-  }, // End of complete function
-}); // End of Papa.parse
 
-function smoothScrollTo(element, target, duration) {
-  target = Math.round(target);
-  duration = Math.round(duration);
-  if (duration < 0) {
-    return Promise.reject("bad duration");
-  }
-  if (duration === 0) {
-    element.scrollTop = target;
-    return Promise.resolve();
-  }
+    // Create an empty bounds object
+    var bounds = new mapboxgl.LngLatBounds();
 
-  var start_time = Date.now();
-  var end_time = start_time + duration;
+    // Parse the CSV file
+    Papa.parse('data.csv', {
+      download: true,
+      header: true,
+      complete: function(results) {
+        var data = results.data;
+        var cardsContainer = document.getElementById('cardsContainer');
+        var selectAllBtn = document.getElementById('selectAllBtn');
+        var selectedCards = []; // Array to store the selected cards
 
-  var start_top = element.scrollTop;
-  var distance = target - start_top;
+        // Create a variable to store the current popup
+        var currentPopup = null;
 
-  // based on http://en.wikipedia.org/wiki/Smoothstep
-  var smooth_step = function(start, end, point) {
-    if(point <= start) { return 0; }
-    if(point >= end) { return 1; }
-    var x = (point - start) / (end - start); // interpolation
-    return x*x*(3 - 2*x);
-  }
+        // Generate cards and markers based on CSV data
+        data.forEach(function(row) {
+          // Create card
+          var card = document.createElement('div');
+          card.className = 'card';
+          card.dataset.lat = row.Latitude;
+          card.dataset.lng = row.Longitude;
+          card.innerHTML = `<div class="property-name">${row['Property Name']}</div> <div class="address">${row.Address}</div> <div class="details">${row['Total Sqft']} sqft, Built in ${row.Built}</div> `;
+          cardsContainer.appendChild(card);
 
-  return new Promise(function(resolve, reject) {
-    // This is to keep track of where the element's scrollTop is
-    // supposed to be, based on what we're doing
-    var previous_top = element.scrollTop;
+          // Create marker
+          var marker = new mapboxgl.Marker()
+            .setLngLat([row.Longitude, row.Latitude])
+            .addTo(map);
 
-    // This is like a think function from a game loop
-    var scroll_frame = function() {
-      if(element.scrollTop != previous_top) {
-        reject("interrupted");
-        return;
+          // Add click event listener to the marker
+          marker.getElement().addEventListener('click', function(e) {
+            // Stop the event propagation so that the 'click' event on the map won't be triggered
+            e.stopPropagation();
+
+            // Toggle marker selection
+            toggleMarkerSelection(marker, card);
+          });
+
+          // Add click event listener to the card
+          card.addEventListener('click', function() {
+            // Toggle card and marker selection
+            toggleCardSelection(card, marker);
+          });
+
+          // Extend the bounds to include the current point
+          bounds.extend([row.Longitude, row.Latitude]);
+        });
+
+        // Fit the map to the bounds of all markers
+        map.fitBounds(bounds, { padding: 90, maxZoom: 14 }); // Adjust maxZoom as needed
+
+        // Select/Deselect All button event listener
+        selectAllBtn.addEventListener('click', function() {
+          var cards = document.querySelectorAll('.card');
+
+          if (selectedCards.length === cards.length) {
+            // Deselect all cards and markers
+            selectedCards.forEach(function(card) {
+              card.classList.remove('card-selected');
+              var marker = getMarkerFromCard(card);
+              if (marker) {
+                marker.getElement().classList.remove('marker-selected');
+              }
+            });
+            selectedCards = [];
+          } else {
+            // Select all cards and markers
+            cards.forEach(function(card) {
+              if (!card.classList.contains('card-selected')) {
+                card.classList.add('card-selected');
+                var marker = getMarkerFromCard(card);
+                if (marker) {
+                  marker.getElement().classList.add('marker-selected');
+                }
+                selectedCards.push(card);
+              }
+            });
+          }
+        });
+
+        // Helper function to toggle card selection
+        function toggleCardSelection(card, marker) {
+          if (card.classList.contains('card-selected')) {
+            // Deselect card and marker
+            card.classList.remove('card-selected');
+            if (marker) {
+              marker.getElement().classList.remove('marker-selected');
+            }
+            removeSelectedCard(card);
+          } else {
+            // Select card and marker
+            card.classList.add('card-selected');
+            if (marker) {
+              marker.getElement().classList.add('marker-selected');
+            }
+            selectedCards.push(card);
+          }
+        }
+
+        // Helper function to toggle marker selection
+        function toggleMarkerSelection(marker, card) {
+          var index = selectedCards.indexOf(card);
+
+          if (index !== -1) {
+            // Deselect card and marker
+            card.classList.remove('card-selected');
+            marker.getElement().classList.remove('marker-selected');
+            removeSelectedCard(card);
+          } else {
+            // Deselect all previously selected cards and markers
+            selectedCards.forEach(function(selectedCard) {
+              selectedCard.classList.remove('card-selected');
+              var selectedMarker = getMarkerFromCard(selectedCard);
+              if (selectedMarker) {
+                selectedMarker.getElement().classList.remove('marker-selected');
+              }
+            });
+            selectedCards = [];
+
+            // Select card and marker
+            card.classList.add('card-selected');
+            marker.getElement().classList.add('marker-selected');
+            selectedCards.push(card);
+          }
+        }
+
+        // Helper function to remove card from selectedCards array
+        function removeSelectedCard(card) {
+          var index = selectedCards.indexOf(card);
+          if (index !== -1) {
+            selectedCards.splice(index, 1);
+          }
+        }
+
+        // Helper function to get marker from card
+        function getMarkerFromCard(card) {
+          var lat = parseFloat(card.dataset.lat);
+          var lng = parseFloat(card.dataset.lng);
+
+          var markers = map.getMarkers();
+          for (var i = 0; i < markers.length; i++) {
+            var marker = markers[i];
+            var markerLngLat = marker.getLngLat();
+            if (markerLngLat.lat === lat && markerLngLat.lng === lng) {
+              return marker;
+            }
+          }
+
+          return null;
+        }
       }
-
-      // set the scrollTop for this frame
-      var now = Date.now();
-      var point = smooth_step(start_time, end_time, now);
-      var frameTop = Math.round(start_top + (distance * point));
-      element.scrollTop = frameTop;
-
-      // check if we're done!
-      if(now >= end_time) {
-        resolve();
-        return;
-      }
-
-      // If we were supposed to scroll but didn't, then we
-      // probably hit the limit, so consider it done; not
-      // interrupted.
-      if(element.scrollTop === previous_top
-        && element.scrollTop !== frameTop) {
-        resolve();
-        return;
-      }
-      previous_top = element.scrollTop;
-
-      // schedule next frame for execution
-      setTimeout(scroll_frame, 0);
-    }
-
-    // boostrap the animation process
-    setTimeout(scroll_frame, 0);
-  });
-}
-
-         
-
-</script>
+    });
+  </script>
 </body>
 </html>
-
-
