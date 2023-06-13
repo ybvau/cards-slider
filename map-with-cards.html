@@ -116,176 +116,157 @@
         return 'Other';
       }
     }
+// Define the locationContainers object
+var locationContainers = {};
 
-    var locationContainers = {};
+// Parse the CSV file
+Papa.parse('data.csv', {
+  download: true,
+  header: true,
+  complete: function(results) {
+    var data = results.data;
+    var cardsContainer = document.getElementById('cardsContainer');
+    var stateDropdownContainer = document.getElementById('stateDropdownContainer');
 
-    // Parse the CSV file
-    Papa.parse('data.csv', {
-      download: true,
-      header: true,
-      complete: function(results) {
-        var data = results.data;
-        var cardsContainer = document.getElementById('cardsContainer');
+    // Create a variable to store the current popup
+    var currentPopup = null;
 
-        // Create a variable to store the current popup
-        var currentPopup = null;
+    data.forEach(function(row) {
+      // Extract the city and state from the address
+      var addressParts = row.Address.split(',');
+      var city = addressParts[1].trim().replace(/"/g, ''); // Extract the city after the second comma, remove double quotes, and trim any leading/trailing spaces
+      var state = addressParts[2].trim();
 
-        data.forEach(function(row) {
-          // Get the location category from the address
-          var locationCategory = getLocationCategory(row.Address);
+      // Generate a unique key for the location container
+      var locationContainerKey = state + '-' + city;
 
-          // Create a new location container if it doesn't exist
-          if (!locationContainers[locationCategory]) {
-            var locationContainer = document.createElement('div');
-            locationContainer.id = locationCategory.replace(/\s+/g, '').toLowerCase();
-            locationContainer.innerHTML = '<h2>' + locationCategory + '</h2>';
+      // Create a new location container if it doesn't exist
+      if (!locationContainers[locationContainerKey]) {
+        var locationContainer = document.createElement('div');
+        locationContainer.id = locationContainerKey.replace(/\s+/g, '').toLowerCase();
+        locationContainer.innerHTML = '<h2>' + city + '</h2>';
 
-            // Append the new location container to the cards container
-            cardsContainer.appendChild(locationContainer);
+        // Append the new location container to the cards container
+        cardsContainer.appendChild(locationContainer);
 
-            // Store the new location container
-            locationContainers[locationCategory] = locationContainer;
-          }
+        // Store the new location container
+        locationContainers[locationContainerKey] = locationContainer;
+      }
 
-          // Create card
-          var card = document.createElement('div');
-          card.className = 'card';
-          card.dataset.lat = row.Latitude;
-          card.dataset.lng = row.Longitude;
-          card.innerHTML = `<div class="property-name">${row['Property Name']}</div> <div class="address">${row.Address}</div> <div class="details">${row['Total Sqft']} sqft, Built in ${row.Built}</div>`;
+      // Create card
+      var card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.lat = row.Latitude;
+      card.dataset.lng = row.Longitude;
+      card.innerHTML = `<div class="property-name">${row['Property Name']}</div> <div class="address">${row.Address}</div> <div class="details">${row['Total Sqft']} sqft, Built in ${row.Built}</div>`;
 
-          // Append the card to the appropriate location container
-          locationContainers[locationCategory].appendChild(card);
+      // Append the card to the appropriate location container
+      locationContainers[locationContainerKey].appendChild(card);
 
-          // Create marker
-          var marker = new mapboxgl.Marker()
-            .setLngLat([row.Longitude, row.Latitude])
-            .addTo(map);
+      // Create marker
+      var marker = new mapboxgl.Marker()
+        .setLngLat([row.Longitude, row.Latitude])
+        .addTo(map);
 
-          // Add click event listener to the card
-          card.addEventListener('click', function() {
-            // Get the info pane element
-            var infoPane = document.getElementById('infoPane');
+      // Add click event listener to the card
+      card.addEventListener('click', function() {
+        // Get the info pane element
+        var infoPane = document.getElementById('infoPane');
 
-            // If the card is already selected, deselect it and hide the info pane
-            if (card.classList.contains('card-selected')) {
-              card.classList.remove('card-selected');
-              infoPane.style.display = 'none';
-              marker.getElement().classList.remove('marker-selected');
-              return;
-            }
-
-            // Remove the "card-selected" class from all cards
-            document.querySelectorAll('.card').forEach(function(c) {
-              c.classList.remove('card-selected');
-            });
-
-            // Add the "card-selected" class to the clicked card
-            card.classList.add('card-selected');
-
-            // Close any existing popup
-            if (currentPopup) {
-              currentPopup.remove();
-            }
-
-            // Update the content of the info pane
-            infoPane.innerHTML = `
-              <div class="popup-content">
-                <img class="popup-image" src="https://via.placeholder.com/200" alt="Placeholder Image">
-                <h2 class="popup-title">${row['Property Name']}</h2>
-                <div class="popup-address">${row.Address}</div>
-                <div>${row['Total Sqft']} sqft</div>
-                <div>Built in ${row.Built}</div>
-              </div>
-            `;
-
-            // Show the info pane
-            infoPane.style.display = 'block';
-
-            var lat = parseFloat(card.dataset.lat);
-            var lng = parseFloat(card.dataset.lng);
-            // Fly to the selected location
-            map.flyTo({
-              center: [lng, lat],
-              zoom: 15,
-              essential: true
-            });
-
-            // Select the corresponding marker
-            marker.getElement().classList.add('marker-selected');
-          }); // End of card click event listener 
-
-          // Add click event listener to the marker
-          marker.getElement().addEventListener('click', function(e) {
-            // Stop the event propagation so that the 'click' event on the map won't be triggered
-            e.stopPropagation();
-
-            // Remove the 'card-selected' class from all cards
-            document.querySelectorAll('.card').forEach(function(c) {
-              c.classList.remove('card-selected');
-            });
-
-            // Add the 'card-selected' class to the clicked card
-            card.classList.add('card-selected');
-
-            // Close any existing popup
-            if (currentPopup) {
-              currentPopup.remove();
-            }
-
-            // Get the info pane element
-            var infoPane = document.getElementById('infoPane');
-
-            // Update the content of the info pane
-            infoPane.innerHTML = `
-              <div class="popup-content">
-                <img class="popup-image" src="https://via.placeholder.com/200" alt="Placeholder Image">
-                <h2 class="popup-title">${row['Property Name']}</h2>
-                <div class="popup-address">${row.Address}</div>
-                <div>${row['Total Sqft']} sqft</div>
-                <div>Built in ${row.Built}</div>
-              </div>
-            `;
-
-            // Show the info pane
-            infoPane.style.display = 'block';
-
-            // Fly to the selected location
-            map.flyTo({
-              center: [row.Longitude, row.Latitude],
-              zoom: 15,
-              essential: true
-            });
-
-            // Scroll to the selected card
-            smoothScrollTo(cardsContainer, card.offsetTop - cardsContainer.offsetTop, 600);
-          }); // End of marker click event listener
-
-          // Extend the bounds to include the current point
-          bounds.extend([row.Longitude, row.Latitude]);
-        }); // End of forEach
-
-        // Fit the map to the bounds of all markers
-        map.fitBounds(bounds, { padding: 90, maxZoom: 14 }); // Adjust maxZoom as needed
-
-        // Add click event listener to the map to deselect the card and hide the info pane
-        map.on('click', function(e) {
-          // Check if the click event target is the info pane or a child of the info pane
-          if (e.originalEvent.target.closest('#infoPane')) {
-            return; // Do nothing if the info pane was clicked
-          }
-
-          // Remove the 'card-selected' class from all cards
-          document.querySelectorAll('.card').forEach(function(c) {
-            c.classList.remove('card-selected');
-          });
-
-          // Get the info pane element
-          var infoPane = document.getElementById('infoPane');
-
-          // Hide the info pane
+        // If the card is already selected, deselect it and hide the info pane
+        if (card.classList.contains('card-selected')) {
+          card.classList.remove('card-selected');
           infoPane.style.display = 'none';
+          marker.getElement().classList.remove('marker-selected');
+          return;
+        }
+
+        // Remove the "card-selected" class from all cards
+        document.querySelectorAll('.card').forEach(function(c) {
+          c.classList.remove('card-selected');
         });
+
+        // Add the "card-selected" class to the clicked card
+        card.classList.add('card-selected');
+
+        // Close any existing popup
+        if (currentPopup) {
+          currentPopup.remove();
+        }
+
+        // Update the content of the info pane
+        infoPane.innerHTML = `
+          <div class="popup-content">
+            <img class="popup-image" src="https://via.placeholder.com/200" alt="Placeholder Image">
+            <h2 class="popup-title">${row['Property Name']}</h2>
+            <div class="popup-address">${row.Address}</div>
+            <div>${row['Total Sqft']} sqft</div>
+            <div>Built in ${row.Built}</div>
+          </div>
+        `;
+
+        // Show the info pane
+        infoPane.style.display = 'block';
+
+        var lat = parseFloat(card.dataset.lat);
+        var lng = parseFloat(card.dataset.lng);
+        // Fly to the selected location
+        map.flyTo({
+          center: [lng, lat],
+          zoom: 15,
+          essential: true
+        });
+
+        // Select the corresponding marker
+        marker.getElement().classList.add('marker-selected');
+      });
+
+      // Extend the bounds to include the current point
+      bounds.extend([row.Longitude, row.Latitude]);
+    });
+
+    // Fit the map to the bounds of all markers
+    map.fitBounds(bounds, { padding: 90, maxZoom: 14 });
+
+    // Add click event listener to the map to deselect the card and hide the info pane
+    map.on('click', function(e) {
+      // Check if the click event target is the info pane or a child of the info pane
+      if (e.originalEvent.target.closest('#infoPane')) {
+        return; // Do nothing if the info pane was clicked
+      }
+
+      // Remove the 'card-selected' class from all cards
+      document.querySelectorAll('.card').forEach(function(c) {
+        c.classList.remove('card-selected');
+      });
+
+      // Get the info pane element
+      var infoPane = document.getElementById('infoPane');
+
+      // Hide the info pane
+      infoPane.style.display = 'none';
+    });
+
+    // Create state dropdown buttons
+    var states = ['California', 'Hawaii'];
+    states.forEach(function(state) {
+      var stateButton = document.createElement('button');
+      stateButton.textContent = state;
+      stateButton.classList.add('state-button');
+
+      // Add click event listener to the state button
+      stateButton.addEventListener('click', function() {
+        var stateKey = state.toLowerCase();
+        var stateContainer = document.getElementById(stateKey);
+        var isHidden = stateContainer.style.display === 'none';
+
+        // Toggle the visibility of the state container
+        stateContainer.style.display = isHidden ? 'block' : 'none';
+      });
+
+      // Append the state button to the state dropdown container
+      stateDropdownContainer.appendChild(stateButton);
+    });
       }, // End of complete function
     }); // End of Papa.parse
 
