@@ -91,7 +91,7 @@
   <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.3.1/mapbox-gl.css' rel='stylesheet' />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
-  <script>
+<script>
     // Set your Mapbox access token here
     mapboxgl.accessToken = 'pk.eyJ1IjoiYnJ5YW5qYWNvYnMiLCJhIjoiY2xoNHpxN3l0MDluMzNsczJzbHpieWIxayJ9.EFX6EwOCHvgKW1Gb_ALMRA';
 
@@ -106,6 +106,19 @@
     // Create an empty bounds object
     var bounds = new mapboxgl.LngLatBounds();
 
+    // Define the getLocationCategory function and the locationContainers object
+    function getLocationCategory(address) {
+      if (address.includes(', CA')) {
+        return 'California';
+      } else if (address.includes(', HI')) {
+        return 'Hawaii';
+      } else {
+        return 'Other';
+      }
+    }
+
+    var locationContainers = {};
+
     // Parse the CSV file
     Papa.parse('data.csv', {
       download: true,
@@ -117,15 +130,32 @@
         // Create a variable to store the current popup
         var currentPopup = null;
 
-        // Generate cards and markers based on CSV data
         data.forEach(function(row) {
+          // Get the location category from the address
+          var locationCategory = getLocationCategory(row.Address);
+
+          // Create a new location container if it doesn't exist
+          if (!locationContainers[locationCategory]) {
+            var locationContainer = document.createElement('div');
+            locationContainer.id = locationCategory.replace(/\s+/g, '').toLowerCase();
+            locationContainer.innerHTML = '<h2>' + locationCategory + '</h2>';
+
+            // Append the new location container to the cards container
+            cardsContainer.appendChild(locationContainer);
+
+            // Store the new location container
+            locationContainers[locationCategory] = locationContainer;
+          }
+
           // Create card
           var card = document.createElement('div');
           card.className = 'card';
           card.dataset.lat = row.Latitude;
           card.dataset.lng = row.Longitude;
-          card.innerHTML = `<div class="property-name">${row['Property Name']}</div> <div class="address">${row.Address}</div> <div class="details">${row['Total Sqft']} sqft, Built in ${row.Built}</div> `;
-          cardsContainer.appendChild(card);
+          card.innerHTML = `<div class="property-name">${row['Property Name']}</div> <div class="address">${row.Address}</div> <div class="details">${row['Total Sqft']} sqft, Built in ${row.Built}</div>`;
+
+          // Append the card to the appropriate location container
+          locationContainers[locationCategory].appendChild(card);
 
           // Create marker
           var marker = new mapboxgl.Marker()
@@ -329,3 +359,4 @@
   </script>
 </body>
 </html>
+        }
