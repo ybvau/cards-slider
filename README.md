@@ -6,6 +6,10 @@ Mapbox frame that displays the information in your "data.csv" file based on set 
 
 1. The
 
+```sh
+
+```
+
 Based on the information in the CSV and this code, please update the cards to be displayed in containers categorically by the locations, which are all denoted within the CSV already.
 
 The locations to design categories are: 
