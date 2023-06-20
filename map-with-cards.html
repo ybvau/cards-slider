@@ -79,6 +79,10 @@
     .dropdown {
       position: relative;
       display: inline-block;
+      width: 100%;
+    }
+    .dropdown-button {
+      width: 100%;
     }
     .dropdown-content {
       display: none;
@@ -87,14 +91,21 @@
       min-width: 160px;
       box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
       z-index: 1;
+      width: 100%;
     }
-    .dropdown-content a {
+    .dropdown-option {
       color: black;
       padding: 12px 16px;
       text-decoration: none;
       display: block;
+      width: 100%;
     }
-    .dropdown:hover .dropdown-content {display: block;}
+    .dropdown-option:hover {
+      background-color: #f1f1f1;
+    }
+    .dropdown.open .dropdown-content {
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -277,7 +288,34 @@
         map.fitBounds(bounds, { padding: 90, maxZoom: 14 }); // Adjust maxZoom if needed
       }
     });
+  
+    // Handle dropdown menu clicks
+    var dropdownButtons = document.querySelectorAll('.dropdown-button');
+  
+    dropdownButtons.forEach(function(button) {
+      button.addEventListener('click', function() {
+        var dropdown = button.parentElement;
+        dropdown.classList.toggle('open');
+      });
+    });
+  
+    // Close dropdown menus when clicking outside
+    window.addEventListener('click', function(event) {
+      dropdownButtons.forEach(function(button) {
+        if (!button.contains(event.target)) {
+          button.parentElement.classList.remove('open');
+        }
+      });
+    });
+  
+    // Prevent dropdown menu from closing when clicking inside
+    var dropdownContents = document.querySelectorAll('.dropdown-content');
+  
+    dropdownContents.forEach(function(content) {
+      content.addEventListener('click', function(event) {
+        event.stopPropagation();
+      });
+    });
   </script>
-
 </body>
 </html>
