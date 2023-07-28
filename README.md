@@ -1,3 +1,4 @@
+## Guide.
 * the product works with .csv files. The .csv files should be formatted wit hthe following column headers for appropriate data display:
 "Address |	City	| State |	Property Name | Latitude |	Longitude |	Total Sqft |	Built |	Floors |	Office/APT". Please see data.csv in card-slider/v3/.
 * Once formatted (can be done in Excel, Spreadsheets, etc) export as csv and rename to "data.csv".
