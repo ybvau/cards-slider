@@ -3,7 +3,7 @@
 "Address |	City	| State |	Property Name | Latitude |	Longitude |	Total Sqft |	Built |	Floors |	Office/APT". Please see data.csv in card-slider/v3/.
 * Once formatted (can be done in Excel, Spreadsheets, etc) export as csv and rename to "data.csv".
 * Images named after the Property Name column are automatically uploaded as images. The images are stored in the card-slider/v3/imgs.
-* Please set your Mapbox API token while referencing the Mapbox docs. https://docs.mapbox.com/help/getting-started/access-tokens/ is a useful reference.
+* Please set your Mapbox API token while referencing the Mapbox docs. [Here](https://docs.mapbox.com/help/getting-started/access-tokens/) is a useful reference.
 
 Methods of use
 * Placing it in an [iframe](https://www.w3schools.com/html/html_iframe.asp)
