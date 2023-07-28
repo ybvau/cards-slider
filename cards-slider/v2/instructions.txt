@@ -1,0 +1,5 @@
+0. Copy repository.
+1. Upload images in address format as depicted in the current repository.
+2. Capture relevant address information as formatted in data.csv, and save it to a file with the same name.
+3. Voila
+

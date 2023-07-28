@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Property Index</title>
+    <style>
+        body {
+            font-family: "Noto Sans", sans-serif;
+            padding-top: 100px; /* Same as the height of the sticky bar */
+        }
+        .card {
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+            transition: 0.3s;
+            width: 40%;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            background-color: white;
+        }
+        .card:hover {
+            box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+        }
+        .container {
+            padding: 2px 16px;
+            flex-grow: 1;
+        }
+        .card-image {
+            width: 100px;
+            height: 100px;
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: center;
+        }
+        #select-buttons {
+            margin-bottom: 20px;
+        }
+        .selected {
+            background-color: gray;
+        }
+        /* Sticky Bar */
+        .sticky-bar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background-color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div class="sticky-bar">
+        <h1>Property Index</h1>
+        <h2 id="total-properties">Total Properties Selected: 0</h2>
+        <h2 id="total-sqft">Total Sqft Selected: 0</h2>
+        <div id="select-buttons">
+            <button id="select-all">Select All</button>
+            <button id="deselect-all">Deselect All</button>
+        </div>
+    </div>
+    <div id="cards"></div>
+
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script>
+        d3.csv("data.csv").then(function(data) {
+            data.forEach(function(d) {
+                var card = d3.select("#cards")
+                    .append("div")
+                    .attr("class", "card")
+                    .on("click", function() {
+                        var checkbox = d3.select(this).select(".select-checkbox");
+                        checkbox.property("checked", !checkbox.property("checked"));
+                        if (checkbox.property("checked")) {
+                            d3.select(this).classed("selected", true);
+                        } else {
+                            d3.select(this).classed("selected", false);
+                        }
+                        calculateTotal();
+                    })
+                    .html(`
+                        <input type="checkbox" id="${d.ID}" class="select-checkbox" style="display: none;">
+                        <div class="container">
+                            <h4><b>${d["Property Name"]}</b></h4> 
+                            <p>${d.Address}, ${d.City}, ${d.State}</p>
+                            <p>Total Sqft: ${d["Total Sqft"]}</p>
+                        </div>
+                        <div class="card-image" style="background-image: url('./imgs/${d["Property Name"]}.jpg');"></div>
+                    `);
+            });
+
+            // Select All button
+            document.getElementById("select-all").addEventListener("click", function() {
+                d3.selectAll(".card").classed("selected", true);
+                d3.selectAll(".select-checkbox").property("checked", true);
+                calculateTotal();
+            });
+
+            // Deselect All button
+            document.getElementById("deselect-all").addEventListener("click", function() {
+                d3.selectAll(".card").classed("selected", false);
+                d3.selectAll(".select-checkbox").property("checked", false);
+                calculateTotal();
+            });
+
+            function calculateTotal() {
+                var totalSqft = 0;
+                var totalProperties = 0;
+                d3.selectAll(".select-checkbox").each(function(d, i) {
+                    if(d3.select(this).property("checked")) {
+                        totalSqft += Number(data[i]["Total Sqft"]);
+                        totalProperties++;
+                    }
+                });
+                document.getElementById("total-sqft").innerText = "Total Sqft Selected: " + totalSqft;
+                document.getElementById("total-properties").innerText = "Total Properties Selected: " + totalProperties;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Map with Cards - Mapbox GL JS</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v1.3.1/mapbox-gl.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Avenir', sans-serif;
+      background-color: white;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Existing CSS styles */
+    #container {
+      position: relative;
+      display: flex;
+      flex-direction: row;
+    }
+
+    #cardsContainer {
+      max-height: 600px;
+      overflow-y: auto;
+      width: 300px;
+      padding: 10px;
+    }
+
+    #map {
+      flex-grow: 1;
+      height: 600px;
+    }
+
+    .card {
+      cursor: pointer;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin: 5px;
+    }
+
+    .card-selected {
+      background-color: #f0f0f0;
+    }
+
+    .marker-selected {
+    }
+
+    /* New styles for the property index */
+    .sticky-bar {
+      position: sticky;
+      top: 0;
+      background-color: #f0f0f0;
+      padding: 10px;
+      z-index: 100;
+    }
+
+    .card-image {
+      width: 250px;
+      height: 250px;
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      align-self: center;
+    }
+
+    .selected {
+      background-color: #f0f0f0;
+    }
+
+    /* Info pane styles */
+    #infoPaneContainer {
+      position: absolute;
+      top: 60px; /* Adjust the top position to place it over the sticky bar */
+      right: 10px; /* Adjust right position to place it on the top right */
+      background-color: white;
+      border: 1px solid #ccc;
+      z-index: 101; /* Set a higher z-index to place it over the map */
+
+    }
+
+    #infoPane {
+      display: none;
+      width: 250px; /* Set the width of the info pane */
+      max-height: 400px; /* Set a maximum height to control the size */
+      padding: 10px;
+      overflow-y: auto; /* Add overflow-y to enable scrolling if the content exceeds the height */
+    }
+
+    
+
+    #infoPane h3 {
+      margin-top: 0;
+    }
+
+    /* New style for the selected properties list */
+    #selected-properties-list {
+      display: none;
+      margin-top: 10px;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="sticky-bar">
+    <h1>Property Index</h1>
+    <h2 id="total-properties">Total Properties Selected: 0</h2>
+    <h2 id="total-sqft">Total Sqft Selected: 0</h2>
+  </div>
+  <div id="container">
+    <div id="cardsContainer"></div>
+    <div id="map"></div>
+  </div>
+
+  <!-- Move the info pane container to be placed over the map -->
+  <div id="infoPaneContainer">
+    <div id="infoPane"></div>
+  </div>
+
+  <div id="selected-properties-list"></div> <!-- New subsection for selected properties -->
+
+  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.3.1/mapbox-gl.js'></script>
+  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.3.1/mapbox-gl.css' rel='stylesheet' />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script>
+
+  function formatNumberWithCommas(number) {
+        return number.toLocaleString();
+      }
+
+    // Set your Mapbox access token here
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYnJ5YW5qYWNvYnMiLCJhIjoiY2xoNHpxN3l0MDluMzNsczJzbHpieWIxayJ9.EFX6EwOCHvgKW1Gb_ALMRA';
+
+    // Initialize the map
+    var map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/bryanjacobs/clh4znlb501c601qjdq3jeowe',
+      center: [-74.0060, 40.7128],
+      zoom: 13
+    });
+
+    var bounds = new mapboxgl.LngLatBounds();
+
+    var selectionMode = 'one'; // Default mode is "Select One"
+    var data; // To store parsed CSV data
+    var selectedMarker = null; // To keep track of the selected marker
+    var selectedCard = null; // To keep track of the selected card
+
+    function clearSelection() {
+      var selectedCards = document.querySelectorAll('.card-selected');
+      selectedCards.forEach(function(card) {
+        card.classList.remove('card-selected');
+        var index = parseInt(card.getAttribute('data-index'));
+        var marker = map.getLayer(`marker-${index}`);
+        if (marker) {
+          marker.getElement().classList.remove('marker-selected');
+          marker.getElement().style.filter = 'brightness(100%)'; // Reset the marker filter
+        }
+      });
+      selectedMarker = null; // Clear the selected marker
+      selectedCard = null; // Clear the selected card
+      updateTotal();
+      updateSelectedPropertiesList();
+    }
+
+    function updateTotal() {
+      var totalSqft = 0;
+      var totalProperties = 0;
+      var selectedCards = document.querySelectorAll('.card-selected');
+
+      selectedCards.forEach(function(card) {
+        var index = parseInt(card.getAttribute('data-index'));
+        var rowData = data[index];
+        totalSqft += Number(rowData["Total Sqft"]);
+        totalProperties++;
+      });
+
+      document.getElementById("total-sqft").innerText = "Total Sqft Selected: " + totalSqft.toFixed(0);
+      document.getElementById("total-properties").innerText = "Total Properties Selected: " + totalProperties;
+    }
+
+    function updateSelectedPropertiesList() {
+      var selectedCards = document.querySelectorAll('.card-selected');
+      var selectedPropertiesList = document.getElementById('selected-properties-list');
+      selectedPropertiesList.innerHTML = '';
+
+      selectedCards.forEach(function(card) {
+        var index = parseInt(card.getAttribute('data-index'));
+        var rowData = data[index];
+        var property = document.createElement('div');
+        property.innerText = rowData["Property Name"] + ' - ' + rowData["Total Sqft"] + ' sqft';
+        var removeButton = document.createElement('button');
+        removeButton.innerText = 'x';
+        removeButton.addEventListener('click', function() {
+          card.click();
+        });
+        property.appendChild(removeButton);
+        selectedPropertiesList.appendChild(property);
+      });
+
+      if (selectedCards.length > 0) {
+        document.getElementById('selected-properties-list').style.display = 'block';
+      } else {
+        document.getElementById('selected-properties-list').style.display = 'none';
+      }
+    }
+
+    function showInfoPane(rowData) {
+      var infoPane = document.getElementById('infoPane');
+      infoPane.innerHTML = `
+        <h3>${rowData["Property Name"]}</h3>
+        <div>${rowData.Address}, ${rowData.City}, ${rowData.State}</div>
+        <div>Total Sqft: ${parseInt(rowData["Total Sqft"])}</div>
+        <div>Built in: ${parseInt(rowData.Built)}</div>
+        <div class="card-image" style="background-image: url('./imgs/${rowData["Property Name"]}.jpg')"></div>
+      `;
+      infoPane.style.display = 'block';
+    }
+
+    function updateSelectedPropertiesList() {
+      var selectedCards = document.querySelectorAll('.card-selected');
+      var selectedPropertiesList = document.getElementById('selected-properties-list');
+      selectedPropertiesList.innerHTML = '';
+
+      selectedCards.forEach(function(card) {
+        var index = parseInt(card.getAttribute('data-index'));
+        var rowData = data[index];
+        var property = document.createElement('div');
+        property.innerText = rowData["Property Name"] + ' - ' + parseInt(rowData["Total Sqft"]) + ' sqft'; // Convert to whole number
+        var removeButton = document.createElement('button');
+        removeButton.innerText = 'x';
+        removeButton.addEventListener('click', function() {
+          card.click();
+        });
+        property.appendChild(removeButton);
+        selectedPropertiesList.appendChild(property);
+      });
+
+      if (selectedCards.length > 0) {
+        document.getElementById('selected-properties-list').style.display = 'block';
+      } else {
+        document.getElementById('selected-properties-list').style.display = 'none';
+      }
+    }
+
+    Papa.parse('data.csv', {
+      download: true,
+      header: true,
+      complete: function(results) {
+        data = results.data;
+        var cardsContainer = document.getElementById('cardsContainer');
+
+        data.forEach(function(row, index) {
+          var card = document.createElement('div');
+          card.className = 'card';
+          card.dataset.lat = row.Latitude;
+          card.dataset.lng = row.Longitude;
+          card.dataset.index = index; // Store the index for data access later
+          card.innerHTML = `
+            <div class="property-name">${row['Property Name']}</div>
+            <div class="address">${row.Address}, ${row.City}, ${row.State}</div>
+            <div class="details">${parseInt(row['Total Sqft'])} sqft, Built in ${parseInt(row.Built)}</div>
+          `;
+
+          cardsContainer.appendChild(card);
+
+          // Create marker
+          var marker = new mapboxgl.Marker()
+            .setLngLat([row.Longitude, row.Latitude])
+            .addTo(map);
+
+          card.addEventListener('click', function() {
+            if (card.classList.contains('card-selected')) {
+              card.classList.remove('card-selected');
+              marker.getElement().classList.remove('marker-selected');
+              marker.getElement().style.filter = 'brightness(100%)'; // Reset the marker filter
+              updateTotal();
+              updateSelectedPropertiesList();
+              document.getElementById('infoPane').style.display = 'none'; // Hide the info pane when deselecting a card
+              return;
+            }
+
+            card.classList.add('card-selected');
+
+            marker.getElement().classList.add('marker-selected');
+            marker.getElement().style.filter = 'brightness(150%)'; // Apply a brightness filter to the marker
+
+            var lat = parseFloat(card.dataset.lat);
+            var lng = parseFloat(card.dataset.lng);
+            map.flyTo({
+              center: [lng, lat],
+              zoom: 15,
+              essential: true
+            });
+
+            var rowData = data[parseInt(card.dataset.index)];
+            showInfoPane(rowData); // Show the info pane with the selected property data
+
+            updateTotal();
+            updateSelectedPropertiesList();
+            document.getElementById('infoPane').style.display = 'block'; // Show the info pane when selecting a card
+          });
+
+          marker.getElement().addEventListener('click', function(e) {
+            e.stopPropagation();
+            card.click();
+          });
+
+          bounds.extend([row.Longitude, row.Latitude]);
+        });
+
+        map.fitBounds(bounds, { padding: 90, maxZoom: 14 });
+      }
+    });
+
+    // Listen for click events on the "total properties" text
+    document.getElementById("total-properties").addEventListener("click", function() {
+      // Grab a reference to the div that contains the selected properties
+      var selectedPropertiesList = document.getElementById("selected-properties-list");
+
+      // If the selected properties are currently hidden, show them
+      if (selectedPropertiesList.style.display === "none") {
+        selectedPropertiesList.style.display = "block";
+      }
+      // If the selected properties are currently shown, hide them
+      else {
+        selectedPropertiesList.style.display = "none";
+      }
+    });
+  </script>
+</body>
+</html>
