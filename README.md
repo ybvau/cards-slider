@@ -6,7 +6,7 @@
 * Please set your Mapbox API token while referencing the Mapbox docs. https://docs.mapbox.com/help/getting-started/access-tokens/ is a useful reference.
 
 Methods of use
-* [Placing in an iframe](https://www.techtarget.com/whatis/definition/IFrame-Inline-Frame#:~:text=What%20is%20inline%20frame%20(iframe,webpage%20within%20the%20parent%20page.)
+* [Placing in an iframe](https://www.techtarget.com/whatis/definition/IFrame-Inline-Frame#:~:text=What%20is%20inline%20frame%20(iframe,webpage%20within%20the%20parent%20page)
 * The index.html webpage and other files at the directory level ./v3/ can be placed on any website.
 
  How to Use
